@@ -10,7 +10,6 @@ import psycopg2
 
 app = flask.Flask("Film_recomendation")
 
-
 params = dict(dbname="postgres", user="postgres", password="8246", host="localhost")
 
 with psycopg2.connect(**params) as conn:
@@ -49,51 +48,50 @@ with psycopg2.connect(**params) as conn:
         ''')
 
 
-def add_user_login(cur, cur_nick, cur_password):
-    cur.execute("INSERT INTO login (nick, password) VALUES ('{}', '{}')".format(cur_nick, cur_password))
+def add_user_login(cur_cursor, cur_nick, cur_password):
+    cur_cursor.execute("INSERT INTO login (nick, password) VALUES ('{}', '{}')".format(cur_nick, cur_password))
 
 
-def add_user_session_mood(cur, cur_nick, cur_mood):
-    cur.execute("UPDATE user_session SET mood = {} WHERE nick = '{}'". format(cur_mood, cur_nick))
+def add_user_session_mood(cur_cursor, cur_nick, cur_mood):
+    cur_cursor.execute("UPDATE user_session SET mood = {} WHERE nick = '{}'". format(cur_mood, cur_nick))
 
 
-def add_user_session_company(cur, cur_nick, cur_company, cur_people):
-    cur.execute("UPDATE user_session SET company = '{}', people = '{}' WHERE nick = '{}'". format(cur_company, cur_people, cur_nick))
+def add_user_session_company(cur_cursor, cur_nick, cur_company, cur_people):
+    cur_cursor.execute("UPDATE user_session SET company = '{}', people = '{}' WHERE nick = '{}'". format(cur_company, cur_people, cur_nick))
 
 
-def add_user_session_age(cur, cur_nick, cur_age):
-    cur.execute("UPDATE user_session SET age = '{}' WHERE nick = '{}'". format(cur_age, cur_nick))
+def add_user_session_age(cur_cursor, cur_nick, cur_age):
+    cur_cursor.execute("UPDATE user_session SET age = '{}' WHERE nick = '{}'". format(cur_age, cur_nick))
 
 
-def add_user_session_genres(cur, cur_nick, cur_genres):
-        cur.execute("UPDATE user_session SET genres = '{}' WHERE nick = '{}'". format(cur_genres, cur_nick))
+def add_user_session_genres(cur_cursor, cur_nick, cur_genres):
+        cur_cursor.execute("UPDATE user_session SET genres = '{}' WHERE nick = '{}'". format(cur_genres, cur_nick))
 
 
-def add_film_info(cur, cur_film, cur_genre, cur_mood, cur_company, cur_age, cur_age_rating):
-    cur.execute("INSERT INTO bd_films (name, genre, mood, company, age, age_rating)"
-                " VALUES ('{}', '{}', '{}', '{}', '{}', '{}')"
-                .format(cur_film, cur_genre, cur_mood, cur_company, cur_age, cur_age_rating))
+def add_film_info(cur_cursor, cur_film_name, cur_genre, cur_mood, cur_company, cur_age, cur_age_rating):
+    cur_cursor.execute("INSERT INTO bd_films (name, genre, mood, company, age, age_rating)"
+                       " VALUES ('{}', '{}', '{}', '{}', '{}', '{}')"
+                       .format(cur_film_name, cur_genre, cur_mood, cur_company, cur_age, cur_age_rating))
 
 
-def check_nick(cur, cur_nick):     # do not know
+def check_nick(cur_cursor, cur_nick):     # do not know
     q = "SELECT * FROM login WHERE nick = '{}'".format(cur_nick)
-    cur.execute(q)
-    for row in cur:
+    cur_cursor.execute(q)
+    for row in cur_cursor:          # i dont know how can i check null query, is None doesnt work
         return True
     return False
 
 
-def check_all_param(cur, cur_nick):
+def check_all_param(cur_cursor, cur_nick):
     q = "SELECT mood, company, people, age, genres FROM user_session where nick = '{}'".format(cur_nick)
-    cur.execute(q)
-    for row in cur:
-        mood, company, people, age, genres = row
-        if mood is None or company is None or age is None:
-            return None
-        dct_param = {'mood': mood, 'company': company, 'people': people, 'age': age}
-        if genres is not None:
-            dct_param['genres'] = genres.split(' ')
-        return dct_param
+    cur_cursor.execute(q)
+    row = cur_cursor.fetchone()
+    if row[0] is None or row[1] is None or row[3] is None:
+        return None
+    dct_param = {'mood': row[0], 'company': row[1], 'people': row[2], 'age': row[3]}
+    if row[4] is not None:
+        dct_param['genres'] = row[4].split(' ')
+    return dct_param
 
 
 def choose_film(cur_intrests):
@@ -102,10 +100,10 @@ def choose_film(cur_intrests):
     name_film = None
     value = -100
     with psycopg2.connect(**params) as conn:
-        cur = conn.cursor()
+        cur_cursor = conn.cursor()
         q = "SELECT name, genre, mood, company, age, age_rating FROM bd_films"
-        cur.execute(q)
-        for f in cur:
+        cur_cursor.execute(q)
+        for f in cur_cursor:
             name, genre, mood, company, age, age_rating = f
             cur_dct = {'name': name, 'mood': mood, 'company': company, 'age': age, 'age_rating': age_rating, 'genre': genre}
             cur_film = cfilm(cur_dct)
@@ -126,11 +124,11 @@ with psycopg2.connect(**params) as conn:
 @app.route('/register', methods=['POST'])
 def register():
     with psycopg2.connect(**params) as conn:
-        cur = conn.cursor()
-        if check_nick(cur, flask.request.json['nick']):
+        cur_cursor = conn.cursor()
+        if check_nick(cur_cursor, flask.request.json['nick']):
             flask.abort(400)
         else:
-            add_user_login(cur, flask.request.json['nick'], flask.request.json['password'])
+            add_user_login(cur_cursor, flask.request.json['nick'], flask.request.json['password'])
             conn.commit()
             return 'ok'
 
@@ -141,7 +139,7 @@ def check_login():
     cur_password = flask.request.json['password']
     with psycopg2.connect(**params) as conn:
         cur = conn.cursor()
-        cur.execute("SELECT nick, password FROM login")
+        cur.execute("SELECT nick, password FROM login")  # too much time
         for row in cur:
             if (cur_nick, cur_password) == row:
                 return 'ok'
@@ -153,7 +151,7 @@ def add_session_of_user():
     with psycopg2.connect(**params) as conn:
         cur = conn.cursor()
         cur.execute("INSERT INTO user_session (nick) VALUES ('{}')".format(flask.request.json['nick']))             # МОЖЕТ ПРОИЗОЙТИ ФИГНЯ, ЕСЛИ ПОД ОДНИМ НИКОМ АКТИВНО НЕСКОЛЬКО СЕССИЙ
-        conn.commit()
+        conn.commit()                                                                                               # ОПЯТЬ ЖЕ ИЗОЛИР ТРАНЗАКЦИЙ
     return 'ok'
 
 
@@ -218,8 +216,8 @@ def add_company():
 @app.route('/get_film', methods=['GET'])
 def get_film():
     with psycopg2.connect(**params) as conn:
-        cur = conn.cursor()
-        param_user = check_all_param(cur, flask.request.json['nick'])
+        cur_cursor = conn.cursor()
+        param_user = check_all_param(cur_cursor, flask.request.json['nick'])
         if param_user is not None:
             return json.dumps(choose_film(param_user))
         else:
@@ -229,8 +227,8 @@ def get_film():
 @app.route('/get_drink', methods=['GET'])
 def get_drink():
     with psycopg2.connect(**params) as conn:
-        cur = conn.cursor()
-        param_film = check_all_param(cur, flask.request.json['nick'])
+        cur_cursor = conn.cursor()
+        param_film = check_all_param(cur_cursor, flask.request.json['nick'])
         if param_film is not None:
             return json.dumps(drink_smart_function(param_film))
         else:

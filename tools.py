@@ -12,7 +12,7 @@ def correct_company(_company):
 def correct_age(_age):
     if not _age.isdigit():
         return False
-    elif int(_age) < 1:
+    elif int(_age) < 10 or int(_age) > 100:
         return False
     else:
         return True
