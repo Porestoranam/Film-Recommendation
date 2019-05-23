@@ -2,6 +2,7 @@ import random
 import math
 import collections
 from tools import fruits
+from constants import *
 
 
 def value_drink_mood(_mood):

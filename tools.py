@@ -1,3 +1,6 @@
+from constants import *
+
+
 def correct_people(num_people):
     return num_people.isdigit()
 
@@ -12,7 +15,7 @@ def correct_company(_company):
 def correct_age(_age):
     if not _age.isdigit():
         return False
-    elif int(_age) < 10 or int(_age) > 100:
+    elif not min_age <= int(_age) <= max_age:
         return False
     else:
         return True
@@ -21,7 +24,7 @@ def correct_age(_age):
 def correct_mood(_mood):
     if not _mood.isdigit():
         return False
-    elif int(_mood) < 1 or int(_mood) > 10:
+    elif not 1 <= int(_mood) <= 10:
         return False
     else:
         return True
@@ -37,14 +40,12 @@ def correct_genre(_genres):
 fruits = ['apple', 'piece of pineapple', 'slice of orange', 'slice of lemon', 'cubes of ice', 'half of banana',
           'small kiwi', 'little piece of lime', 'grape branch']
 
-
 companies = ['alone', 'family', 'friends', 'girlfriend']
 
 genres_valuates = {}
 
 all_genres = ["action", "adventure", "comedy", "thriller", "drama", "historical", "horror",
               "musicals", "science_fiction", "war", "western"]
-
 
 genres_valuates[('action', 'action')] = 1
 genres_valuates[('action', 'comedy')] = 0.6

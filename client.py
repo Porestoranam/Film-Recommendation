@@ -1,6 +1,6 @@
 import argparse
 import requests
-
+from constants import *
 
 # parser does hot work. Use defaults
 parser = argparse.ArgumentParser()
@@ -11,8 +11,8 @@ set_parser.add_argument('--port', default=50000, help='Enter your port for conne
 set_parser.add_argument('--host', default='localhost', help='Enter your host')
 
 args = set_parser.parse_args()
-address = 'http://localhost:50000/'
-# address = 'http://{}:{}/'.format(args.host, args.port)
+# address = 'http://localhost:50000/'
+address = 'http://{}:{}/'.format(args.host, args.port)
 
 
 def register_func():
@@ -65,6 +65,7 @@ def client_choose_fun(user_login):
         print("To select one of this, type, for example, mood or film")
         print("Choose option...")
         option = input()
+        option = option.strip(' ')
         if option == 'exit':
             requests.post(address + 'end_session', json={'nick': user_login})
             raise SystemExit
@@ -99,9 +100,9 @@ def drink_func(user_login):
         print("You should enter all options: mood/age/company")
         return client_choose_fun(user_login)
     else:
-        print("#" * 50)
+        print("#" * num_of_brackets)
         print(r.json())
-        print("#" * 50)
+        print("#" * num_of_brackets)
         return client_choose_fun(user_login)
 
 
@@ -111,9 +112,21 @@ def film_func(user_login):
         print("You should enter all options: mood/age/company")
         return client_choose_fun(user_login)
     else:
-        print("#" * 50)
-        print(r.json())
-        print("#" * 50)
+        vec_films = r.json()
+        for i in vec_films:
+            print("To go back type back")
+            print("Type get film!")
+            client_request = input()
+            client_request = client_request.strip(' ')
+            if client_request == "get film":
+                print("#" * num_of_brackets)
+                print(i)
+                print("#" * num_of_brackets)
+            elif client_request == "back":
+                return client_choose_fun(user_login)
+            else:
+                print("Enter correct!")
+        print("Enough!")
         return client_choose_fun(user_login)
 
 
@@ -122,12 +135,14 @@ def company_func(user_login):
         print("To go back type 'back'")
         print("Please enter your company: alone/friends/family/girlfriend")
         client_company = input()
+        client_company = client_company.strip(' ')
         if client_company == 'back':
             return client_choose_fun(user_login)
 
         elif client_company == 'friends' or client_company == 'family':
             print("How many people are going to go with you?")
             num_people = input()
+            num_people = num_people.strip(' ')
             if requests.post(address + 'add_company',
                              json={'company': client_company, 'people': num_people, 'nick': user_login}).status_code == 400:
                 print("Please, enter correct")
@@ -145,6 +160,7 @@ def mood_func(user_login):
         print("To go back type 'back'")
         print("Please enter your mood from 1 to 10:")
         client_mood = input()
+        client_mood = client_mood.strip(' ')
         if client_mood == 'back':
             return client_choose_fun(user_login)
         if requests.post(address + 'add_mood',
@@ -157,8 +173,12 @@ def mood_func(user_login):
 def age_func(user_login):
     while True:
         print("To go back type 'back'")
+        # print(requests.post(address + 'prev_param', json={'nick': user_login}).request)
         print("Please enter your age from 10 to 100:")
         client_age = input()
+        client_age = client_age.strip(' ')
+        if client_age == '':
+            return client_choose_fun(user_login)
         if client_age == 'back':
             return client_choose_fun(user_login)
 
@@ -178,6 +198,7 @@ def genres_func(user_login):
         print("Type all if it doesn't matter")
         print("To go back type 'back'")
         client_genres = input()
+        client_genres = client_genres.strip(' ')
         if client_genres == 'all':
             return client_choose_fun(user_login)
         elif client_genres == 'back':
@@ -198,6 +219,7 @@ while True:
     print("Dou you want to register or you have an account? register/log in")
 
     reg = input()
+    reg = reg.strip(' ')
 
     if reg == 'register':
         register_func()
