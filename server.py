@@ -58,7 +58,6 @@ with psycopg2.connect(**params) as conn:
     ''')
 
 
-
 def add_user_login(cur_cursor, cur_nick, cur_password):
     cur_cursor.execute("INSERT INTO login (nick, password) VALUES ('{}', '{}')".format(cur_nick, cur_password))
 
@@ -90,7 +89,7 @@ def add_genres_valuate(cur_cursor, first_genre, second_genre, genres_value):
                        " VALUES ('{}', '{}', '{}')".format(first_genre, second_genre, genres_value))
 
 
-def check_nick(cur_cursor, cur_nick):     # do not know
+def check_nick(cur_cursor, cur_nick):
     q = "SELECT * FROM login WHERE nick = '{}'".format(cur_nick)
     cur_cursor.execute(q)
     for row in cur_cursor:          # i dont know how can i check null query, is None doesnt work
@@ -102,12 +101,18 @@ def check_all_param(cur_cursor, cur_nick):
     q = "SELECT mood, company, people, age, genres FROM user_session where nick = '{}'".format(cur_nick)
     cur_cursor.execute(q)
     row = cur_cursor.fetchone()
-    if row[0] is None or row[1] is None or row[3] is None:
-        return None
+    # if row[0] is None or row[1] is None or row[3] is None:
+    #    return None
     dct_param = {'mood': row[0], 'company': row[1], 'people': row[2], 'age': row[3]}
     if row[4] is not None:
         dct_param['genres'] = row[4].split(' ')
     return dct_param
+
+
+def check_main_param_user(client_dct):
+    if client_dct['age'] is None or client_dct['company'] is None or client_dct['mood'] is None:
+        return False
+    return True
 
 
 def choose_film(cur_intrests):
@@ -170,8 +175,8 @@ def check_login():
 def add_session_of_user():
     with psycopg2.connect(**params) as conn:
         cur = conn.cursor()
-        cur.execute("INSERT INTO user_session (nick) VALUES ('{}')".format(flask.request.json['nick']))             # МОЖЕТ ПРОИЗОЙТИ ФИГНЯ, ЕСЛИ ПОД ОДНИМ НИКОМ АКТИВНО НЕСКОЛЬКО СЕССИЙ
-        conn.commit()                                                                                               # ОПЯТЬ ЖЕ ИЗОЛИР ТРАНЗАКЦИЙ
+        cur.execute("INSERT INTO user_session (nick) VALUES ('{}')".format(flask.request.json['nick']))
+        conn.commit()
     return 'ok'
 
 
@@ -238,7 +243,7 @@ def get_film():
     with psycopg2.connect(**params) as conn:
         cur_cursor = conn.cursor()
         param_user = check_all_param(cur_cursor, flask.request.json['nick'])
-        if param_user is not None:
+        if check_main_param_user(param_user):           # change here
             return json.dumps(choose_film(param_user))
         else:
             flask.abort(400)
