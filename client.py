@@ -99,9 +99,9 @@ def drink_func(user_login):
         print("You should enter all options: mood/age/company")
         return client_choose_fun(user_login)
     else:
-        print("############################################")
+        print("#" * 50)
         print(r.json())
-        print("############################################")
+        print("#" * 50)
         return client_choose_fun(user_login)
 
 
@@ -111,9 +111,9 @@ def film_func(user_login):
         print("You should enter all options: mood/age/company")
         return client_choose_fun(user_login)
     else:
-        print("############################################")
+        print("#" * 50)
         print(r.json())
-        print("############################################")
+        print("#" * 50)
         return client_choose_fun(user_login)
 
 
@@ -174,10 +174,13 @@ def genres_func(user_login):
     while True:
         print("Please enter your favorite genres through the gap from next below:")
         print("\"action\", \"adventure\", \"comedy\", \"thriller\", \"drama\", \"historical\"")
-        print(" \"horror\", \"musicals\", \"science fiction\", \"war\", \"western\"")
+        print(" \"horror\", \"musicals\", \"science_fiction\", \"war\", \"western\"")
+        print("Type all if it doesn't matter")
         print("To go back type 'back'")
         client_genres = input()
-        if client_genres == 'back':
+        if client_genres == 'all':
+            return client_choose_fun(user_login)
+        elif client_genres == 'back':
             return client_choose_fun(user_login)
         elif client_genres == 'exit':
             raise SystemExit

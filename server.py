@@ -1,7 +1,7 @@
 import flask
 import json
 import argparse
-from tools import correct_mood, correct_age, correct_company, correct_genre, correct_people, all_genres
+from tools import correct_mood, correct_age, correct_company, correct_genre, correct_people, all_genres, genres_valuates
 from films import smart_function, cfilm
 from drinks import drink_smart_function
 from mini_script import just
@@ -18,6 +18,7 @@ with psycopg2.connect(**params) as conn:
     cur.execute('DROP TABLE IF EXISTS bd_films CASCADE')
     cur.execute('DROP TABLE IF EXISTS user_session CASCADE')
     cur.execute('DROP TABLE IF EXISTS login CASCADE')
+    cur.execute('DROP TABLE IF EXISTS genres_valuates CASCADE')
 
     cur.execute('''
         CREATE TABLE bd_films (
@@ -47,6 +48,16 @@ with psycopg2.connect(**params) as conn:
             )
         ''')
 
+    cur.execute('''
+    CREATE TABLE genres_valuates(
+    first_genre VARCHAR(255),
+    second_genre VARCHAR(255),
+    value double precision,
+    PRIMARY KEY(first_genre, second_genre)
+    )
+    ''')
+
+
 
 def add_user_login(cur_cursor, cur_nick, cur_password):
     cur_cursor.execute("INSERT INTO login (nick, password) VALUES ('{}', '{}')".format(cur_nick, cur_password))
@@ -72,6 +83,11 @@ def add_film_info(cur_cursor, cur_film_name, cur_genre, cur_mood, cur_company, c
     cur_cursor.execute("INSERT INTO bd_films (name, genre, mood, company, age, age_rating)"
                        " VALUES ('{}', '{}', '{}', '{}', '{}', '{}')"
                        .format(cur_film_name, cur_genre, cur_mood, cur_company, cur_age, cur_age_rating))
+
+
+def add_genres_valuate(cur_cursor, first_genre, second_genre, genres_value):
+    cur_cursor.execute("INSERT INTO genres_valuates (first_genre, second_genre, value)"
+                       " VALUES ('{}', '{}', '{}')".format(first_genre, second_genre, genres_value))
 
 
 def check_nick(cur_cursor, cur_nick):     # do not know
@@ -115,9 +131,13 @@ def choose_film(cur_intrests):
 
 with psycopg2.connect(**params) as conn:
     film_info = just()
-    cur = conn.cursor()
+    add_cur = conn.cursor()
     for cur_film in film_info:
-        add_film_info(cur, cur_film['film'], cur_film['genre'], cur_film['mood'], cur_film['company'], cur_film['age'], cur_film['age_rating'])
+        add_film_info(add_cur, cur_film['film'], cur_film['genre'], cur_film['mood'], cur_film['company'], cur_film['age'], cur_film['age_rating'])
+
+    for ((f_genre, s_genre), g_value) in genres_valuates.items():
+        add_genres_valuate(add_cur, f_genre, s_genre, g_value)
+
     conn.commit()
 
 
